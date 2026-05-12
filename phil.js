@@ -66,7 +66,72 @@ const DIALOGUES = {
     ]
 };
 
-let curW = 0, curP = 0, curDlgP = 'A', curDomain = 'all';
+let curW = 0, curP = 0, curDlgP = 'A', curDomain = 'all', curPhen = null;
+
+const PHEN_CONTENT = {
+    1: {
+        color: '#2563EB',
+        title: '為什麼 AI 總是低估？',
+        body: `<p>四週資料中，多數人的差值（AI 預測 − 體感）為負值——AI 的預測，比你真實感受到的更悲觀。</p>
+               <p>原因可能是：AI 讀取的是你描述的「壓力點」，這些往往是負面關鍵字。當你說「考試壓力很大」、「專題進度落後」，AI 看到的是困難，而不是你面對困難時仍然存在的韌性與掌控感。</p>
+               <blockquote>說出困難，本身就是一種掌控感的表現。但 AI 還沒學會讀懂這件事。</blockquote>`
+    },
+    2: {
+        color: '#3D6B1E',
+        title: '壓力最大的一週，體感分卻最高——為什麼？',
+        body: `<p>第四週（5 月初）是 Demo、比賽、發表最集中的時期，表面上是壓力最大的一週，但全組體感平均卻達到四週最高的 <strong>86.3 分</strong>。</p>
+               <p>這反映了一個深刻的心理現象：<strong>我們在意義感最強的時候，反而最有活力。</strong>不是壓力讓我們覺得狀態差，而是那種「這件事我在乎、我全力以赴」的感覺，讓我們覺得活著是有方向的。</p>
+               <blockquote>這讓我想到「心流」（Flow）概念——當挑戰與能力之間達到特定平衡，我們會進入一種忘我的專注狀態，這個狀態本身就帶來極大的滿足感。第四週很多人可能就是在這種狀態裡。</blockquote>
+               <div class="pd-ai-note"><span class="pd-ai-tag">AI</span>AI 沒能預測到這個。它看到的是壓力，而不是意義。這正是 AI 目前無法取代人的地方——它能辨識情境的負荷，卻無法感知那份負荷背後的驅動力。</div>`
+    },
+    3: {
+        color: '#D97706',
+        title: '為什麼超過半數的 AI 建議被實際執行？',
+        body: `<p>四週平均建議執行率達 68%，組員不只「聽了覺得有道理」，而是真的去做了。這個數字背後藏著一個關鍵：<strong>輸入越具體，建議越能被執行。</strong></p>
+               <p>當使用者描述明確情境——比如「我要準備 SQL 考試，但同時有專題壓力」——AI 給出的是針對性步驟，而不是通用建議。可執行的步驟，才會讓人有動力去行動。</p>
+               <blockquote>高執行率的週次，幾乎都是 Prompt 輸入最具體的週次。AI 的品質，是被你的輸入決定的。</blockquote>`
+    },
+    4: {
+        color: '#7C3AED',
+        title: '為什麼具體輸入的評分，明顯高於佔位符？',
+        body: `<p>使用「[具體壓力點]」等佔位符的週次，AI 給的回答籠統、評分偏低；填入真實情境的週次，AI 能說出更貼近個人的話，評分顯著拉高。</p>
+               <p>這驗證了本次實驗最核心的假設：<strong>AI 不是算命師，它沒有透視你心思的能力。</strong>命理框架的真正作用，是強迫使用者輸入更多個人背景資訊——這才是讓 AI 回答個人化的關鍵機制。</p>
+               <blockquote>你給它多少真實的自己，它就能說出多少真正適合你的話。這不是玄學，這是資訊學。</blockquote>`
+    }
+};
+
+function showPhen(n, el) {
+    const outer = document.getElementById('phenDetail');
+    const inner = outer.querySelector('.phen-detail-inner');
+    const cards = document.querySelectorAll('.phen-card');
+
+    if (curPhen === n) {
+        outer.style.maxHeight = '0';
+        outer.style.opacity = '0';
+        outer.style.marginBottom = '0';
+        el.classList.remove('phen-active');
+        el.setAttribute('aria-expanded', 'false');
+        curPhen = null;
+        return;
+    }
+
+    cards.forEach(c => { c.classList.remove('phen-active'); c.setAttribute('aria-expanded', 'false'); });
+    el.classList.add('phen-active');
+    el.setAttribute('aria-expanded', 'true');
+    curPhen = n;
+
+    const data = PHEN_CONTENT[n];
+    inner.style.borderLeftColor = data.color;
+    inner.innerHTML = `<div class="pd-title" style="color:${data.color}">${data.title}</div><div class="pd-body">${data.body}</div>`;
+
+    outer.style.maxHeight = '0';
+    outer.style.opacity = '0';
+    outer.style.marginBottom = '20px';
+    requestAnimationFrame(() => {
+        outer.style.maxHeight = (inner.scrollHeight + 48) + 'px';
+        outer.style.opacity = '1';
+    });
+}
 
 function dbadge(d) {
     if (d === null || d === undefined) return '';
@@ -142,32 +207,129 @@ function buildDiffChart() {
             if (d !== null && d !== undefined) {
                 flat.labels.push(`W${wi + 1} ${n.slice(0, 2)}`);
                 flat.data.push(d);
-                flat.colors.push(d > 0 ? '#EF4444' : d < 0 ? '#2563EB' : '#94A3B8');
+                flat.colors.push(d > 0 ? '#EF4444' : d < 0 ? '#2563EB' : '#F59E0B');
             }
         });
     });
+    const borderColors = flat.data.map(d => d === 0 ? '#92400E' : 'transparent');
+    const borderWidths = flat.data.map(d => d === 0 ? 2 : 0);
+    const zeroMarkerPlugin = {
+        id: 'zeroMarker',
+        afterDatasetsDraw(chart) {
+            const { ctx, scales } = chart;
+            const yZero = scales.y.getPixelForValue(0);
+            const meta = chart.getDatasetMeta(0);
+            flat.data.forEach((val, i) => {
+                if (val !== 0) return;
+                const bar = meta.data[i];
+                const w = Math.max(bar.width * 0.75, 8);
+                ctx.save();
+                ctx.fillStyle = '#F59E0B';
+                ctx.strokeStyle = '#92400E';
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(bar.x - w / 2, yZero - 6, w, 12);
+                ctx.strokeRect(bar.x - w / 2, yZero - 6, w, 12);
+                ctx.restore();
+            });
+        }
+    };
+
     new Chart(document.getElementById('diffC'), {
         type: 'bar',
-        data: { labels: flat.labels, datasets: [{ data: flat.data, backgroundColor: flat.colors, borderRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 9 }, maxRotation: 90, autoSkip: false } } }, plugins: { legend: { display: false } } }
+        data: { labels: flat.labels, datasets: [{ data: flat.data, backgroundColor: flat.colors, borderColor: borderColors, borderWidth: borderWidths, borderRadius: 2 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { ticks: { font: { size: 10 } }, grid: { color: ctx => ctx.tick.value === 0 ? '#64748B' : '#E2E8F0', lineWidth: ctx => ctx.tick.value === 0 ? 2 : 1 } },
+                x: { ticks: { font: { size: 9 }, maxRotation: 90, autoSkip: false } }
+            },
+            plugins: { legend: { display: false } }
+        },
+        plugins: [zeroMarkerPlugin]
     });
 }
 
 function buildModelChart() {
     const leg = document.getElementById('modelLeg');
-    [{ c: '#10B981', n: 'Gemini' }, { c: '#2563EB', n: 'ChatGPT' }, { c: '#7C3AED', n: 'Claude' }].forEach(m => {
+    [{ c: '#10B981', n: '預測精準度' }, { c: '#2563EB', n: '建議可行性' }].forEach(m => {
         leg.innerHTML += `<div class="lchip"><div class="lsq" style="background:${m.c}"></div>${m.n}</div>`;
     });
+
+    const rleg = document.getElementById('radarLeg');
+    [{ c: '#10B981', n: 'Gemini' }, { c: '#2563EB', n: 'ChatGPT' }, { c: '#7C3AED', n: 'Claude' }].forEach(m => {
+        rleg.innerHTML += `<div class="lchip"><div class="lsq" style="background:${m.c}"></div>${m.n}</div>`;
+    });
+
+    const valueLabelPlugin = {
+        id: 'valueLabel',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+                chart.getDatasetMeta(i).data.forEach((bar, j) => {
+                    const val = dataset.data[j];
+                    ctx.save();
+                    ctx.fillStyle = '#1A2332';
+                    ctx.font = 'bold 12px "Noto Sans TC", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(val.toFixed(1), bar.x, bar.y - 5);
+                    ctx.restore();
+                });
+            });
+        }
+    };
+
     new Chart(document.getElementById('modelC'), {
         type: 'bar',
         data: {
             labels: ['Gemini', 'ChatGPT', 'Claude'],
             datasets: [
-                { label: '預測精準度', data: [3.6, 3.8, 3.7], backgroundColor: '#10B98199', borderRadius: 3 },
-                { label: '建議可行性', data: [3.9, 4.5, 4.3], backgroundColor: '#2563EB99', borderRadius: 3 }
+                { label: '預測精準度', data: [3.6, 3.8, 3.7], backgroundColor: '#10B98166', borderColor: '#10B981', borderWidth: 1.5, borderRadius: 8 },
+                { label: '建議可行性', data: [3.9, 4.5, 4.3], backgroundColor: '#2563EB66', borderColor: '#2563EB', borderWidth: 1.5, borderRadius: 8 }
             ]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 12 } } } }, plugins: { legend: { display: false } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 22 } },
+            scales: {
+                y: { min: 0, max: 5, grid: { color: '#E2EAD8' }, ticks: { font: { size: 11 }, stepSize: 1 } },
+                x: { grid: { display: false }, ticks: { font: { size: 12, weight: 'bold' } } }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}：${ctx.parsed.y} / 5` } }
+            },
+            animation: { duration: 900, easing: 'easeOutQuart' }
+        },
+        plugins: [valueLabelPlugin]
+    });
+
+    new Chart(document.getElementById('radarC'), {
+        type: 'radar',
+        data: {
+            labels: ['預測精準度', '建議可行性', '一致性'],
+            datasets: [
+                { label: 'Gemini',  data: [3.6, 3.9, 2.0], borderColor: '#10B981', backgroundColor: '#10B98120', pointBackgroundColor: '#10B981', pointBorderColor: '#fff', pointRadius: 5, borderWidth: 2 },
+                { label: 'ChatGPT', data: [3.8, 4.5, 3.5], borderColor: '#2563EB', backgroundColor: '#2563EB20', pointBackgroundColor: '#2563EB', pointBorderColor: '#fff', pointRadius: 5, borderWidth: 2 },
+                { label: 'Claude',  data: [3.7, 4.3, 4.5], borderColor: '#7C3AED', backgroundColor: '#7C3AED20', pointBackgroundColor: '#7C3AED', pointBorderColor: '#fff', pointRadius: 5, borderWidth: 2 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0, max: 5,
+                    ticks: { stepSize: 1, font: { size: 9 }, backdropColor: 'transparent', color: '#64748B' },
+                    grid: { color: '#E2EAD8' },
+                    angleLines: { color: '#E2EAD8' },
+                    pointLabels: { font: { size: 11, weight: '600' }, color: '#1A2332' }
+                }
+            },
+            plugins: { legend: { display: false } },
+            animation: { duration: 900 }
+        }
     });
 }
 

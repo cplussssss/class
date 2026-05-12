@@ -28,7 +28,8 @@
 
     <div class="hero">
         <div class="hero-inner">
-            <div class="hero-eyebrow"><a href="https://canva.link/gkt6y3c51vz6plb" target="_blank" rel="noopener">114-2 人生哲學期末報告</a></div>
+            <div class="hero-eyebrow"><a href="https://canva.link/gkt6y3c51vz6plb" target="_blank" rel="noopener">114-2
+                    人生哲學期末報告</a></div>
             <h1>火煉真金：癸巳流月下的<br><span class="highlight">自我重構與邏輯平衡</span></h1>
             <p class="hero-sub">探索 AI 對話機器人在個人化命理輔助上的可能性——透過四週實驗，驗證東方命理框架能否讓 AI 說出更貼近你的話。</p>
             <div class="hero-stats">
@@ -59,27 +60,27 @@
     <section id="design">
         <div class="stag">01 研究設計</div>
         <h2 class="stitle">我們怎麼做這個實驗？</h2>
-        <p class="ssub">以八字命理大師角色設定 AI，對 7 位組員進行四週雙維度提問，自評 + 組員交叉評分。</p>
+        <p class="ssub">以八字命理大師角色設定 AI，對 7 位組員進行四週雙維度提問，自評評分。</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num" style="background:#E94560">1</div>
                 <h4>設定角色</h4>
-                <p>以命理大師 Prompt 框架賦予 Gemini / ChatGPT / Claude 相同身份</p>
+                <p>以命理大師 Prompt 框架賦予<br> Gemini / ChatGPT / Claude 相同身份</p>
             </div>
             <div class="step">
                 <div class="step-num" style="background:#D4A017">2</div>
                 <h4>7 人 × 3 模型</h4>
-                <p>同一組員同題分別詢問三個模型，形成可比較的對照組</p>
+                <p>同一組員同題分別詢問三個模型<br>形成可比較的對照組</p>
             </div>
             <div class="step">
                 <div class="step-num" style="background:#2A9D8F">3</div>
                 <h4>雙維度提問</h4>
-                <p>宏觀：每週整體運勢評分 · 微觀：學業壓力 + 感情人際個別問題</p>
+                <p>宏觀：每週整體運勢評分<br>微觀：學業壓力 + 感情人際個別問題</p>
             </div>
             <div class="step">
                 <div class="step-num" style="background:#7C3AED">4</div>
-                <h4>交叉評分</h4>
-                <p>自評 + 組員互評，涵蓋精準度、可行性、邏輯、情緒、體感 5 維度</p>
+                <h4>評分</h4>
+                <p>自評，以預測精準度、建議可行性為主</p>
             </div>
         </div>
         <div class="stats-bar">
@@ -120,27 +121,38 @@
         </div>
         <div style="margin-top:36px">
             <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px">全組四週趨勢 — 四個關鍵發現</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px">
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid #2563EB">
-                    <div style="font-size:11px;color:var(--sub);margin-bottom:4px">現象一</div>
-                    <div style="font-size:20px;font-weight:800;color:#2563EB">↓ 低估</div>
-                    <div style="font-size:12px;color:var(--text);margin-top:4px;line-height:1.5">AI 整體偏向低估，四週多數人差值為負</div>
+            <div class="phen-grid">
+                <div class="phen-card" style="--phen-c:#2563EB" onclick="showPhen(1,this)" tabindex="0" role="button"
+                    aria-expanded="false">
+                    <div class="phen-label">現象一</div>
+                    <div class="phen-value" style="color:#2563EB;font-size:20px">↓ 低估</div>
+                    <div class="phen-desc">AI 整體偏向低估，四週多數人差值為負</div>
+                    <div class="phen-hint">點擊展開解讀 ↓</div>
                 </div>
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid var(--green-main)">
-                    <div style="font-size:11px;color:var(--sub);margin-bottom:4px">現象二：第四週體感平均</div>
-                    <div style="font-size:28px;font-weight:800;color:var(--green-main)">86.3</div>
-                    <div style="font-size:12px;color:var(--text);margin-top:4px;line-height:1.5">第四週體感分明顯拉高，四週最高</div>
+                <div class="phen-card" style="--phen-c:#3D6B1E" onclick="showPhen(2,this)" tabindex="0" role="button"
+                    aria-expanded="false">
+                    <div class="phen-label">現象二：第四週體感平均</div>
+                    <div class="phen-value" style="color:#3D6B1E;font-size:28px">86.3</div>
+                    <div class="phen-desc">第四週體感分明顯拉高，四週最高</div>
+                    <div class="phen-hint">點擊展開解讀 ↓</div>
                 </div>
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid #D97706">
-                    <div style="font-size:11px;color:var(--sub);margin-bottom:4px">現象三：建議執行率平均</div>
-                    <div style="font-size:28px;font-weight:800;color:#D97706">68%</div>
-                    <div style="font-size:12px;color:var(--text);margin-top:4px;line-height:1.5">超過半數 AI 建議被實際採納執行</div>
+                <div class="phen-card" style="--phen-c:#D97706" onclick="showPhen(3,this)" tabindex="0" role="button"
+                    aria-expanded="false">
+                    <div class="phen-label">現象三：建議執行率平均</div>
+                    <div class="phen-value" style="color:#D97706;font-size:28px">68%</div>
+                    <div class="phen-desc">超過半數 AI 建議被實際採納執行</div>
+                    <div class="phen-hint">點擊展開解讀 ↓</div>
                 </div>
-                <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid #7C3AED">
-                    <div style="font-size:11px;color:var(--sub);margin-bottom:4px">現象四</div>
-                    <div style="font-size:18px;font-weight:800;color:#7C3AED">個人化 Prompt</div>
-                    <div style="font-size:12px;color:var(--text);margin-top:4px;line-height:1.5">具體輸入的週次，評分顯著高於佔位符</div>
+                <div class="phen-card" style="--phen-c:#7C3AED" onclick="showPhen(4,this)" tabindex="0" role="button"
+                    aria-expanded="false">
+                    <div class="phen-label">現象四</div>
+                    <div class="phen-value" style="color:#7C3AED;font-size:18px">個人化 Prompt</div>
+                    <div class="phen-desc">具體輸入的週次，評分顯著高於佔位符</div>
+                    <div class="phen-hint">點擊展開解讀 ↓</div>
                 </div>
+            </div>
+            <div id="phenDetail" class="phen-detail-outer">
+                <div class="phen-detail-inner"></div>
             </div>
             <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px">全組四週 AI 預測趨勢</div>
             <div class="legend-row" id="trendLeg"></div>
@@ -157,7 +169,8 @@
                         <div class="lsq" style="background:#EF4444"></div>紅 = 高估
                     </div>
                     <div class="lchip">
-                        <div class="lsq" style="background:#94A3B8"></div>灰 = 吻合
+                        <div class="lsq" style="background:#F59E0B;border:2px solid #92400E;border-radius:2px"></div>金 =
+                        完全吻合
                     </div>
                 </div>
                 <div class="chart-wrap" style="height:280px"><canvas id="diffC" role="img"
@@ -235,9 +248,21 @@
                 <div class="mc-note" style="background:#F5F3FF;color:#5B21B6">精準度最穩定，語言細膩。適合「我需要被理解」的情感需求。</div>
             </div>
         </div>
-        <div class="legend-row" id="modelLeg"></div>
-        <div class="chart-wrap" style="height:220px"><canvas id="modelC" role="img"
-                aria-label="三模型評分比較長條圖">三模型評分比較長條圖</canvas></div>
+        <div class="model-charts-grid">
+            <div class="model-chart-col">
+                <div class="mchart-title">雙維度評分比較</div>
+                <div class="legend-row" id="modelLeg"></div>
+                <div class="chart-wrap" style="height:280px"><canvas id="modelC" role="img"
+                        aria-label="三模型評分比較長條圖">三模型評分比較長條圖</canvas></div>
+            </div>
+            <div class="model-chart-col">
+                <div class="mchart-title">綜合能力雷達圖</div>
+                <div class="legend-row" id="radarLeg"></div>
+                <div class="chart-wrap" style="height:280px"><canvas id="radarC" role="img"
+                        aria-label="三模型綜合能力雷達圖">三模型綜合能力雷達圖</canvas></div>
+            </div>
+        </div>
+        <div class="radar-note">＊雷達圖「一致性」軸為各模型給分標準差估算，數值越高代表回答越穩定</div>
         <div style="margin-top:14px;padding:14px 18px;background:var(--ink);border-radius:11px;color:#fff">
             <div style="font-size:12px;font-weight:700;color:#A8D05A;margin-bottom:6px">關鍵發現：低分 ≠ 低評價</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.65);line-height:1.7">A的感情類別中，Claude 給分最低（63
