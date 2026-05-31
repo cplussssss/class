@@ -274,7 +274,7 @@ function init() {
   initScrollSpy();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('load', init);
 
 /* ── NOTE: No API key needed ─────────────────────────────────
    語音朗讀使用瀏覽器內建的 Web Speech API（speechSynthesis），
