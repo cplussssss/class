@@ -1,5 +1,5 @@
 /* ============================================================
-   main.js  —  AI 命理預測實驗報告
+   GS_main.js  —  AI 命理預測實驗報告
    功能：i18n 切換、Chart.js 圖表、週切換、TTS 朗讀
    ============================================================ */
 
@@ -9,6 +9,7 @@
 let currentLang = 'zh';
 let currentWeek = 'w1';
 let ttsUtterance = null;
+const CHART_INSTANCES = {};
 
 /* ── 2. i18n ────────────────────────────────────────────────── */
 function getNestedLabel(obj, path) {
@@ -26,31 +27,22 @@ function applyI18n(lang) {
     if (val !== null && typeof val === 'string') el.textContent = val;
   });
 
-  // week toggle buttons
-  const btns = document.querySelectorAll('.week-toggle button');
-  btns.forEach((btn, i) => { btn.textContent = L.accuracy.weekLabel[i]; });
+  document.querySelectorAll('.week-toggle button').forEach((btn, i) => {
+    btn.textContent = L.accuracy.weekLabel[i];
+  });
 
-  // lang toggle button text
   document.getElementById('langToggle').textContent = L.langToggle;
-
-  // student cards
   renderStudentCards(lang);
-  // style section
   renderStyleGrid(lang);
 }
 
-/* ── 3. Charts ──────────────────────────────────────────────── */
-const CHART_INSTANCES = {};
+/* ── 3. Chart.js 設定 ───────────────────────────────────────── */
 const AI_COLOR = { gemini: '#4285f4', claude: '#d97706', gpt: '#10a37f' };
-
-const CSS = getComputedStyle(document.documentElement);
-const INK_MID   = '#888';
-const INK       = '#1a1a1a';
-const GRID_COL  = '#e8e0d4';
+const GRID_COL = '#e8e0d4';
 
 Chart.defaults.font.family = "'IBM Plex Mono', monospace";
 Chart.defaults.font.size   = 10;
-Chart.defaults.color       = INK_MID;
+Chart.defaults.color       = '#888';
 
 function buildLineData(ai, week) {
   const preds   = PERSONS.map(p => SCORE_DATA[p][ai][week].pred);
@@ -94,19 +86,22 @@ const CHART_OPTS = {
   },
 };
 
+/* ── 4. initCharts ──────────────────────────────────────────── */
 function initCharts() {
+  const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
   ['gemini', 'claude', 'gpt'].forEach(ai => {
-    const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
     const canvas = document.getElementById(idMap[ai]);
-    if (CHART_INSTANCES[ai]) { CHART_INSTANCES[ai].destroy(); }
+    if (!canvas) return;
+    if (CHART_INSTANCES[ai]) CHART_INSTANCES[ai].destroy();
     CHART_INSTANCES[ai] = new Chart(canvas, {
       type: 'line',
       data: buildLineData(ai, currentWeek),
-      options: structuredClone(CHART_OPTS),
+      options: JSON.parse(JSON.stringify(CHART_OPTS)),
     });
   });
 }
 
+/* ── 5. updateCharts (週切換) ───────────────────────────────── */
 function updateCharts(week) {
   currentWeek = week;
   ['gemini', 'claude', 'gpt'].forEach(ai => {
@@ -116,9 +111,10 @@ function updateCharts(week) {
   });
 }
 
-/* ── 4. Diff bars ───────────────────────────────────────────── */
+/* ── 6. renderDiffBars ──────────────────────────────────────── */
 function renderDiffBars() {
   const wrap = document.getElementById('diffBars');
+  if (!wrap) return;
   const maxVal = 20;
   const items = [
     { ai: 'gpt',    val: AVG_ABS_DIFF.gpt    },
@@ -137,7 +133,6 @@ function renderDiffBars() {
     </div>
   `).join('');
 
-  // Animate on next frame
   requestAnimationFrame(() => {
     document.querySelectorAll('.diff-bar-fill').forEach(el => {
       el.style.width = el.dataset.target;
@@ -145,14 +140,15 @@ function renderDiffBars() {
   });
 }
 
-/* ── 5. Trust donut ─────────────────────────────────────────── */
+/* ── 7. initTrustChart ──────────────────────────────────────── */
 function initTrustChart() {
-  // Count: score 2→3 people, score 3→4 people, score 4→1 person
-  const counts = [0, 0, 0, 0, 0]; // index 0=score1, 1=score2 …
+  const canvas = document.getElementById('chartTrust');
+  if (!canvas) return;
+  if (CHART_INSTANCES.trust) CHART_INSTANCES.trust.destroy();
+
+  const counts = [0, 0, 0, 0, 0];
   TRUST_SCORES.forEach(s => counts[s - 1]++);
 
-  const canvas = document.getElementById('chartTrust');
-  if (CHART_INSTANCES.trust) CHART_INSTANCES.trust.destroy();
   CHART_INSTANCES.trust = new Chart(canvas, {
     type: 'doughnut',
     data: {
@@ -167,14 +163,9 @@ function initTrustChart() {
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { padding: 12, boxWidth: 12 },
-        },
+        legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12 } },
         tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label} 分：${ctx.raw} 人`,
-          },
+          callbacks: { label: ctx => ` ${ctx.label} 分：${ctx.raw} 人` },
         },
       },
       cutout: '58%',
@@ -182,10 +173,11 @@ function initTrustChart() {
   });
 }
 
-/* ── 6. Student cards ───────────────────────────────────────── */
+/* ── 8. Student cards ───────────────────────────────────────── */
 function renderStudentCards(lang) {
   const L = LABELS[lang];
   const wrap = document.getElementById('studentCards');
+  if (!wrap) return;
   wrap.innerHTML = STUDENT_VOICES.map(v => `
     <div class="student-card">
       <div class="card-header">
@@ -210,20 +202,19 @@ function renderStudentCards(lang) {
   `).join('');
 }
 
-/* ── 7. Style grid ──────────────────────────────────────────── */
+/* ── 9. Style grid ──────────────────────────────────────────── */
 function renderStyleGrid(lang) {
   const L = LABELS[lang].styles;
   const wrap = document.getElementById('styleGrid');
+  if (!wrap) return;
   const ais = [
-    { key: 'gemini', label: 'Gemini', headClass: 'gemini-head', tags: L.geminiTags },
-    { key: 'claude', label: 'Claude', headClass: 'claude-head', tags: L.claudeTags },
-    { key: 'gpt',    label: 'ChatGPT', headClass: 'gpt-head',  tags: L.gptTags },
+    { label: 'Gemini',  headClass: 'gemini-head', tags: L.geminiTags },
+    { label: 'Claude',  headClass: 'claude-head', tags: L.claudeTags },
+    { label: 'ChatGPT', headClass: 'gpt-head',    tags: L.gptTags },
   ];
   wrap.innerHTML = ais.map(({ label, headClass, tags }) => `
     <div class="style-card">
-      <div class="style-head ${headClass}">
-        <span>${label}</span>
-      </div>
+      <div class="style-head ${headClass}"><span>${label}</span></div>
       <div class="style-tags">
         ${tags.map(t => `<span class="style-tag">${t}</span>`).join('')}
       </div>
@@ -231,13 +222,9 @@ function renderStyleGrid(lang) {
   `).join('');
 }
 
-/* ── 8. TTS (Web Speech API — no API key needed) ────────────── */
+/* ── 10. TTS ────────────────────────────────────────────────── */
 function speak(text) {
-  if (!window.speechSynthesis) {
-    alert('您的瀏覽器不支援語音功能');
-    return;
-  }
-  // If already speaking, stop
+  if (!window.speechSynthesis) { alert('您的瀏覽器不支援語音功能'); return; }
   if (window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
     document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
@@ -247,9 +234,7 @@ function speak(text) {
   utter.lang = currentLang === 'zh' ? 'zh-TW' : 'en-US';
   utter.rate = 0.92;
   ttsUtterance = utter;
-  utter.onend = () => {
-    document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
-  };
+  utter.onend = () => document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
   window.speechSynthesis.speak(utter);
 }
 
@@ -258,14 +243,11 @@ function bindReadBtn(btnId, textKey) {
   if (!btn) return;
   btn.addEventListener('click', () => {
     const text = getNestedLabel(LABELS[currentLang], textKey);
-    if (text) {
-      btn.classList.toggle('speaking');
-      speak(text);
-    }
+    if (text) { btn.classList.toggle('speaking'); speak(text); }
   });
 }
 
-/* ── 9. Nav active highlight on scroll ──────────────────────── */
+/* ── 11. Scroll spy ─────────────────────────────────────────── */
 function initScrollSpy() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-inner a');
@@ -281,24 +263,19 @@ function initScrollSpy() {
   sections.forEach(s => observer.observe(s));
 }
 
-/* ── 10. Init ───────────────────────────────────────────────── */
+/* ── 12. Init ───────────────────────────────────────────────── */
 function init() {
-  // i18n
   applyI18n(currentLang);
-
-  // Charts
   initCharts();
   renderDiffBars();
   initTrustChart();
 
-  // TTS bindings
-  bindReadBtn('readChartNote',  'accuracy.chartNote');
-  bindReadBtn('readDiffNote',   'accuracy.diffNote');
-  bindReadBtn('readTrustNote',  'trust.note');
-  bindReadBtn('readVoiceNote',  'voices.summaryNote');
-  bindReadBtn('readStyleNote',  'styles.note');
+  bindReadBtn('readChartNote', 'accuracy.chartNote');
+  bindReadBtn('readDiffNote',  'accuracy.diffNote');
+  bindReadBtn('readTrustNote', 'trust.note');
+  bindReadBtn('readVoiceNote', 'voices.summaryNote');
+  bindReadBtn('readStyleNote', 'styles.note');
 
-  // Week toggle
   document.querySelectorAll('.week-toggle button').forEach(btn => {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.week-toggle button').forEach(b => b.classList.remove('active'));
@@ -307,23 +284,14 @@ function init() {
     });
   });
 
-  // Language toggle
   document.getElementById('langToggle').addEventListener('click', () => {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     applyI18n(currentLang);
-    updateCharts(currentWeek); // re-render chart labels
+    updateCharts(currentWeek);
     initTrustChart();
   });
 
-  // Scroll spy
   initScrollSpy();
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-/* ── NOTE: No API key needed ─────────────────────────────────
-   語音朗讀使用瀏覽器內建的 Web Speech API（speechSynthesis），
-   完全免費，不需要任何 API 金鑰，也不會送出任何資料到外部伺服器。
-   支援 Chrome、Edge、Safari（桌機與手機皆可）。
-   Firefox 支援度較有限，建議使用 Chrome。
-   ──────────────────────────────────────────────────────────── */
