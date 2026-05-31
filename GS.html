@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 命理預測實驗報告</title>
+  <link rel="stylesheet" href="GS.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<a href="#main" class="skip-link">跳至主要內容</a>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <p class="header-tag" data-i18n="courseTag">大數據通識課程 · 2026 學年度</p>
+    <h1 data-i18n="title">AI 命理預測實驗報告</h1>
+    <p class="header-sub" data-i18n="subtitle">以大數據通識課程為場域，比較 Gemini、Claude、ChatGPT 三種工具之預測準確度與使用者信任度</p>
+    <button class="lang-btn" id="langToggle" aria-label="Switch language">English</button>
+  </div>
+</header>
+
+<!-- ══ NAV ═════════════════════════════════════════════════════ -->
+<nav aria-label="Page sections">
+  <div class="nav-inner">
+    <a href="#overview"  data-i18n="nav.overview">研究概述</a>
+    <a href="#accuracy"  data-i18n="nav.accuracy">預測準確度</a>
+    <a href="#trust"     data-i18n="nav.trust">信任程度</a>
+    <a href="#voices"    data-i18n="nav.voices">學生回饋</a>
+    <a href="#styles"    data-i18n="nav.styles">AI 風格評比</a>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ══ OVERVIEW ════════════════════════════════════════════════ -->
+<section class="section" id="overview">
+  <div class="container">
+    <h2 data-i18n="overview.heading">研究概述</h2>
+    <p style="max-width:680px" data-i18n="overview.desc">本實驗邀請 8 位學生，連續兩週使用 Gemini、Claude、ChatGPT 三個 AI 工具進行命理運勢預測，並每日記錄「AI 預測總分」與「實際體感分數」，最後以問卷收集質性回饋。</p>
+    <div class="stats-grid">
+      <div class="stat-box"><span class="stat-num">8</span><span class="stat-label" data-i18n="overview.stat1">參與學生</span></div>
+      <div class="stat-box"><span class="stat-num">2</span><span class="stat-label" data-i18n="overview.stat2">觀察週數</span></div>
+      <div class="stat-box"><span class="stat-num">3</span><span class="stat-label" data-i18n="overview.stat3">比較 AI 工具</span></div>
+      <div class="stat-box"><span class="stat-num">288</span><span class="stat-label" data-i18n="overview.stat4">資料筆數</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ACCURACY ════════════════════════════════════════════════ -->
+<section class="section" id="accuracy">
+  <div class="container">
+    <h2 data-i18n="accuracy.heading">預測準確度分析</h2>
+
+    <h3 data-i18n="accuracy.subheading">AI 預測分 vs 實際體感分</h3>
+
+    <div class="legend" aria-label="Chart legend">
+      <span class="legend-item"><span class="legend-line dashed" style="color:#555"></span><span data-i18n="accuracy.predicted">AI 預測</span></span>
+      <span class="legend-item"><span class="legend-line solid" style="color:#555"></span><span data-i18n="accuracy.actual">實際體感</span></span>
+    </div>
+
+    <!-- Week toggle -->
+    <div class="week-toggle" role="group" aria-label="Select week">
+      <button class="active" data-week="w1" data-i18n="weekLabel.0">第一週</button>
+      <button data-week="w2" data-i18n="weekLabel.1">第二週</button>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-box">
+        <h4><span class="ai-dot gemini"></span> Gemini</h4>
+        <canvas id="chartGemini" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4><span class="ai-dot claude"></span> Claude</h4>
+        <canvas id="chartClaude" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4><span class="ai-dot gpt"></span> ChatGPT</h4>
+        <canvas id="chartGPT" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-note">
+      <button class="read-btn" id="readChartNote" data-i18n="accuracy.readBtn">🔊 朗讀說明</button>
+      <span data-i18n="accuracy.chartNote">折線圖呈現各 AI 對 8 位受測者的預測分數（虛線）與受測者自評實際分數（實線）之對比。整體而言，三個 AI 均傾向低估受測者的實際體感分數。ChatGPT 的平均絕對誤差最小（6.06 分），表現最為接近實際；Claude 的誤差最大（13.94 分），有較明顯的系統性低估傾向。</span>
+    </div>
+
+    <!-- Diff bar chart -->
+    <h3 style="margin-top:3rem" data-i18n="accuracy.diffHeading">平均絕對誤差（越低越準）</h3>
+    <div class="diff-chart-wrap" id="diffBars" aria-label="Mean absolute error bar chart"></div>
+
+    <div class="chart-note">
+      <button class="read-btn" id="readDiffNote" data-i18n="accuracy.readBtn">🔊 朗讀說明</button>
+      <span data-i18n="accuracy.diffNote">長條圖比較三個 AI 的平均絕對誤差。ChatGPT 以 6.06 分的誤差表現最佳，Gemini 居中（7.44 分），Claude 誤差最大（13.94 分）。值得注意的是，三個 AI 皆系統性地低估受測者的實際感受，可能反映命理預測工具普遍傾向保守。</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ TRUST ════════════════════════════════════════════════════ -->
+<section class="section" id="trust">
+  <div class="container">
+    <h2 data-i18n="trust.heading">使用者信任程度</h2>
+    <p class="trust-scale-note" data-i18n="trust.scale">1＝完全不信任　3＝保留態度　5＝相當信任</p>
+
+    <div class="trust-layout">
+      <div>
+        <div class="trust-donut-wrap">
+          <canvas id="chartTrust" height="280"></canvas>
+        </div>
+        <div class="trust-avg-box">
+          <span class="trust-avg-num">2.75</span>
+          <span class="trust-avg-label" data-i18n="trust.avgLabel">平均信任分數</span>
+        </div>
+      </div>
+      <div>
+        <div class="chart-note">
+          <button class="read-btn" id="readTrustNote" data-i18n="trust.readBtn">🔊 朗讀說明</button>
+          <span data-i18n="trust.note">信任分數分佈圖顯示，8 位受測者中有 3 人給出 2 分（偏向不信任），4 人給出 3 分（保留態度），1 人給出 4 分（偏向信任），整體平均為 2.75 分。多數學生認為 AI 命理預測「偶爾有準、偶爾沒準」，適合作為參考但不宜過度依賴。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ VOICES ═══════════════════════════════════════════════════ -->
+<section class="section" id="voices">
+  <div class="container">
+    <h2 data-i18n="voices.heading">學生質性回饋</h2>
+
+    <div class="chart-note">
+      <button class="read-btn" id="readVoiceNote" data-i18n="voices.readBtn">🔊 朗讀摘要</button>
+      <span data-i18n="voices.summaryNote">8 位學生的回饋中，最常被說中的主題是「睡眠與健康」（6/8 人），其次是「人際社交」（3/8 人）。最不相關的預測主題則集中在「戀愛感情」與「投資理財」，顯示命理預測對無相關生活情境者效力有限。</span>
+    </div>
+
+    <div class="cards-grid" id="studentCards"></div>
+  </div>
+</section>
+
+<!-- ══ STYLES ════════════════════════════════════════════════════ -->
+<section class="section" id="styles">
+  <div class="container">
+    <h2 data-i18n="styles.heading">AI 風格評比</h2>
+
+    <div class="chart-note">
+      <button class="read-btn" id="readStyleNote" data-i18n="styles.readBtn">🔊 朗讀摘要</button>
+      <span data-i18n="styles.note">學生對三個 AI 的主觀風格評價呈現明顯差異：Gemini 被認為最接近命理師口吻，格式清晰、標註具體日期；Claude 以精美排版與圖表分析為特色，文字帶有文學感；ChatGPT 則風格最為日常，像朋友般關心，但內容相對籠統。</span>
+    </div>
+
+    <div class="style-grid" id="styleGrid"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span data-i18n="footer">大數據通識課程 · 2026 學年度 · 資料已匿名處理</span>
+</footer>
+
+<script src="data.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
