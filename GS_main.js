@@ -1,6 +1,6 @@
 /* ============================================================
-   GS_main.js  —  AI 命理預測實驗報告
-   功能：i18n 切換、Chart.js 圖表、週切換、TTS 朗讀
+   main.js  —  AI 命理預測實驗報告
+   功能：i18n 切換、Python 預產圖表（base64）、週切換、TTS 朗讀
    ============================================================ */
 
 'use strict';
@@ -9,7 +9,6 @@
 let currentLang = 'zh';
 let currentWeek = 'w1';
 let ttsUtterance = null;
-const CHART_INSTANCES = {};
 
 /* ── 2. i18n ────────────────────────────────────────────────── */
 function getNestedLabel(obj, path) {
@@ -27,22 +26,28 @@ function applyI18n(lang) {
     if (val !== null && typeof val === 'string') el.textContent = val;
   });
 
-  document.querySelectorAll('.week-toggle button').forEach((btn, i) => {
-    btn.textContent = L.accuracy.weekLabel[i];
-  });
+  // week toggle buttons
+  const btns = document.querySelectorAll('.week-toggle button');
+  btns.forEach((btn, i) => { btn.textContent = L.accuracy.weekLabel[i]; });
 
+  // lang toggle button text
   document.getElementById('langToggle').textContent = L.langToggle;
+
+  // student cards
   renderStudentCards(lang);
+  // style section
   renderStyleGrid(lang);
 }
 
-/* ── 3. Chart.js 設定 ───────────────────────────────────────── */
+/* ── 3. Charts ──────────────────────────────────────────────── */
+const PERSONS = ['P1','P2','P3','P4','P5','P6','P7','P8'];
 const AI_COLOR = { gemini: '#4285f4', claude: '#d97706', gpt: '#10a37f' };
-const GRID_COL = '#e8e0d4';
 
-Chart.defaults.font.family = "'IBM Plex Mono', monospace";
-Chart.defaults.font.size   = 10;
-Chart.defaults.color       = '#888';
+const CSS = getComputedStyle(document.documentElement);
+const INK_MID   = '#888';
+const INK       = '#1a1a1a';
+const GRID_COL  = '#e8e0d4';
+
 
 function buildLineData(ai, week) {
   const preds   = PERSONS.map(p => SCORE_DATA[p][ai][week].pred);
@@ -86,98 +91,56 @@ const CHART_OPTS = {
   },
 };
 
-/* ── 4. initCharts ──────────────────────────────────────────── */
 function initCharts() {
-  const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
-  ['gemini', 'claude', 'gpt'].forEach(ai => {
-    const canvas = document.getElementById(idMap[ai]);
-    if (!canvas) return;
-    if (CHART_INSTANCES[ai]) CHART_INSTANCES[ai].destroy();
-    CHART_INSTANCES[ai] = new Chart(canvas, {
-      type: 'line',
-      data: buildLineData(ai, currentWeek),
-      options: JSON.parse(JSON.stringify(CHART_OPTS)),
-    });
-  });
+  updateCharts(currentWeek);
 }
 
-/* ── 5. updateCharts (週切換) ───────────────────────────────── */
 function updateCharts(week) {
   currentWeek = week;
+  const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
   ['gemini', 'claude', 'gpt'].forEach(ai => {
-    if (!CHART_INSTANCES[ai]) return;
-    CHART_INSTANCES[ai].data = buildLineData(ai, week);
-    CHART_INSTANCES[ai].update('active');
+    const key = ai + '_' + week;
+    let img = document.getElementById('img_' + ai);
+    if (!img) {
+      const canvas = document.getElementById(idMap[ai]);
+      if (!canvas) return;
+      img = document.createElement('img');
+      img.id = 'img_' + ai;
+      img.style.cssText = 'width:100%;display:block;border-radius:2px;';
+      canvas.parentNode.replaceChild(img, canvas);
+    }
+    img.src = CHART_IMGS[key];
+    img.alt = ai + ' ' + week + ' chart';
   });
 }
 
-/* ── 6. renderDiffBars ──────────────────────────────────────── */
+/* ── 4. Diff bars ───────────────────────────────────────────── */
 function renderDiffBars() {
   const wrap = document.getElementById('diffBars');
   if (!wrap) return;
-  const maxVal = 20;
-  const items = [
-    { ai: 'gpt',    val: AVG_ABS_DIFF.gpt    },
-    { ai: 'gemini', val: AVG_ABS_DIFF.gemini  },
-    { ai: 'claude', val: AVG_ABS_DIFF.claude  },
-  ];
-  const labels = { gemini: 'Gemini', claude: 'Claude', gpt: 'ChatGPT' };
-
-  wrap.innerHTML = items.map(({ ai, val }) => `
-    <div class="diff-bar-row">
-      <span class="diff-bar-label">${labels[ai]}</span>
-      <div class="diff-bar-track" role="img" aria-label="${labels[ai]}: ${val}">
-        <div class="diff-bar-fill ${ai}" style="width:0%" data-target="${(val/maxVal*100).toFixed(1)}%"></div>
-        <span class="diff-bar-val">${val}</span>
-      </div>
-    </div>
-  `).join('');
-
-  requestAnimationFrame(() => {
-    document.querySelectorAll('.diff-bar-fill').forEach(el => {
-      el.style.width = el.dataset.target;
-    });
-  });
+  wrap.innerHTML = `<img src="${CHART_IMGS['diff']}" alt="Mean absolute error bar chart"
+    style="width:100%;max-width:460px;display:block;border-radius:2px;">`;
 }
 
-/* ── 7. initTrustChart ──────────────────────────────────────── */
+/* ── 5. Trust donut ─────────────────────────────────────────── */
 function initTrustChart() {
   const canvas = document.getElementById('chartTrust');
   if (!canvas) return;
-  if (CHART_INSTANCES.trust) CHART_INSTANCES.trust.destroy();
-
-  const counts = [0, 0, 0, 0, 0];
-  TRUST_SCORES.forEach(s => counts[s - 1]++);
-
-  CHART_INSTANCES.trust = new Chart(canvas, {
-    type: 'doughnut',
-    data: {
-      labels: ['1', '2', '3', '4', '5'],
-      datasets: [{
-        data: counts,
-        backgroundColor: ['#c0392b', '#e67e22', '#f1c40f', '#27ae60', '#2980b9'],
-        borderWidth: 2,
-        borderColor: '#f9f6f0',
-      }],
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 12, boxWidth: 12 } },
-        tooltip: {
-          callbacks: { label: ctx => ` ${ctx.label} 分：${ctx.raw} 人` },
-        },
-      },
-      cutout: '58%',
-    },
-  });
+  let img = document.getElementById('img_trust');
+  if (!img) {
+    img = document.createElement('img');
+    img.id = 'img_trust';
+    img.style.cssText = 'width:100%;max-width:280px;display:block;margin:0 auto;border-radius:2px;';
+    canvas.parentNode.replaceChild(img, canvas);
+  }
+  img.src = CHART_IMGS['trust'];
+  img.alt = 'Trust distribution chart';
 }
 
-/* ── 8. Student cards ───────────────────────────────────────── */
+/* ── 6. Student cards ───────────────────────────────────────── */
 function renderStudentCards(lang) {
   const L = LABELS[lang];
   const wrap = document.getElementById('studentCards');
-  if (!wrap) return;
   wrap.innerHTML = STUDENT_VOICES.map(v => `
     <div class="student-card">
       <div class="card-header">
@@ -202,19 +165,20 @@ function renderStudentCards(lang) {
   `).join('');
 }
 
-/* ── 9. Style grid ──────────────────────────────────────────── */
+/* ── 7. Style grid ──────────────────────────────────────────── */
 function renderStyleGrid(lang) {
   const L = LABELS[lang].styles;
   const wrap = document.getElementById('styleGrid');
-  if (!wrap) return;
   const ais = [
-    { label: 'Gemini',  headClass: 'gemini-head', tags: L.geminiTags },
-    { label: 'Claude',  headClass: 'claude-head', tags: L.claudeTags },
-    { label: 'ChatGPT', headClass: 'gpt-head',    tags: L.gptTags },
+    { key: 'gemini', label: 'Gemini', headClass: 'gemini-head', tags: L.geminiTags },
+    { key: 'claude', label: 'Claude', headClass: 'claude-head', tags: L.claudeTags },
+    { key: 'gpt',    label: 'ChatGPT', headClass: 'gpt-head',  tags: L.gptTags },
   ];
   wrap.innerHTML = ais.map(({ label, headClass, tags }) => `
     <div class="style-card">
-      <div class="style-head ${headClass}"><span>${label}</span></div>
+      <div class="style-head ${headClass}">
+        <span>${label}</span>
+      </div>
       <div class="style-tags">
         ${tags.map(t => `<span class="style-tag">${t}</span>`).join('')}
       </div>
@@ -222,41 +186,97 @@ function renderStyleGrid(lang) {
   `).join('');
 }
 
-/* ── 10. TTS ────────────────────────────────────────────────── */
-function speak(text) {
-  if (!window.speechSynthesis) { alert('您的瀏覽器不支援語音功能'); return; }
-  if (window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
-    return;
+/* ── 8. TTS ──────────────────────────────────────────────────
+   中文：播放預錄 mp3（audio/ 資料夾）
+   英文：Web Speech API
+   ──────────────────────────────────────────────────────────── */
+
+// mp3 檔名對應表（中文）
+const AUDIO_FILES = {
+  'accuracy.chartNote': 'audio/chart_zh.mp3',
+  'accuracy.diffNote':  'audio/diff_zh.mp3',
+  'trust.note':         'audio/trust_zh.mp3',
+  'voices.summaryNote': 'audio/voices_zh.mp3',
+  'styles.note':        'audio/styles_zh.mp3',
+};
+
+let currentAudio = null; // 追蹤目前播放中的 Audio 物件
+
+function stopAll() {
+  // 停止 mp3
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
   }
+  // 停止 Web Speech
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
+  document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
+}
+
+function speakZh(audioFile, btn) {
+  // 如果已經在播，就停止
+  if (currentAudio) { stopAll(); return; }
+
+  const audio = new Audio(audioFile);
+  currentAudio = audio;
+  btn.classList.add('speaking');
+
+  audio.play().catch(() => {
+    // 檔案不存在或無法播放時，fallback 到 Web Speech
+    currentAudio = null;
+    btn.classList.remove('speaking');
+    speakEn(getNestedLabel(LABELS['zh'], btn.dataset.textKey), btn);
+  });
+
+  audio.onended = () => {
+    currentAudio = null;
+    btn.classList.remove('speaking');
+  };
+}
+
+function speakEn(text, btn) {
+  if (!window.speechSynthesis) return;
+  if (window.speechSynthesis.speaking) { stopAll(); return; }
 
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = currentLang === 'zh' ? 'zh-TW' : 'en-US';
-  utter.rate = 0.88;
-
-  // 挑比較好聽的聲音
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v =>
-    v.lang.startsWith(currentLang === 'zh' ? 'zh' : 'en') &&
-    (v.name.includes('Google') || v.name.includes('Microsoft'))
-  );
-  if (preferred) utter.voice = preferred;
-
-  utter.onend = () => document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
+  utter.lang = 'en-US';
+  utter.rate = 0.92;
+  btn.classList.add('speaking');
+  utter.onend = () => btn.classList.remove('speaking');
   window.speechSynthesis.speak(utter);
 }
 
 function bindReadBtn(btnId, textKey) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
+  btn.dataset.textKey = textKey; // 存起來供 fallback 用
+
   btn.addEventListener('click', () => {
-    const text = getNestedLabel(LABELS[currentLang], textKey);
-    if (text) { btn.classList.toggle('speaking'); speak(text); }
+    // 如果有其他按鈕在播，先全停
+    const alreadyPlaying = btn.classList.contains('speaking');
+    stopAll();
+    if (alreadyPlaying) return; // 再按一次 = 停止
+
+    if (currentLang === 'zh') {
+      const file = AUDIO_FILES[textKey];
+      if (file) {
+        speakZh(file, btn);
+      } else {
+        // 沒有對應 mp3，fallback Web Speech
+        const text = getNestedLabel(LABELS['zh'], textKey);
+        if (text) speakEn(text, btn);
+      }
+    } else {
+      const text = getNestedLabel(LABELS['en'], textKey);
+      if (text) speakEn(text, btn);
+    }
   });
 }
 
-/* ── 11. Scroll spy ─────────────────────────────────────────── */
+/* ── 9. Nav active highlight on scroll ──────────────────────── */
 function initScrollSpy() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-inner a');
@@ -272,19 +292,24 @@ function initScrollSpy() {
   sections.forEach(s => observer.observe(s));
 }
 
-/* ── 12. Init ───────────────────────────────────────────────── */
+/* ── 10. Init ───────────────────────────────────────────────── */
 function init() {
+  // i18n
   applyI18n(currentLang);
+
+  // Charts
   initCharts();
   renderDiffBars();
   initTrustChart();
 
-  bindReadBtn('readChartNote', 'accuracy.chartNote');
-  bindReadBtn('readDiffNote',  'accuracy.diffNote');
-  bindReadBtn('readTrustNote', 'trust.note');
-  bindReadBtn('readVoiceNote', 'voices.summaryNote');
-  bindReadBtn('readStyleNote', 'styles.note');
+  // TTS bindings
+  bindReadBtn('readChartNote',  'accuracy.chartNote');
+  bindReadBtn('readDiffNote',   'accuracy.diffNote');
+  bindReadBtn('readTrustNote',  'trust.note');
+  bindReadBtn('readVoiceNote',  'voices.summaryNote');
+  bindReadBtn('readStyleNote',  'styles.note');
 
+  // Week toggle
   document.querySelectorAll('.week-toggle button').forEach(btn => {
     btn.addEventListener('click', function () {
       document.querySelectorAll('.week-toggle button').forEach(b => b.classList.remove('active'));
@@ -293,14 +318,23 @@ function init() {
     });
   });
 
+  // Language toggle
   document.getElementById('langToggle').addEventListener('click', () => {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     applyI18n(currentLang);
-    updateCharts(currentWeek);
+    updateCharts(currentWeek); // re-render chart labels
     initTrustChart();
   });
 
+  // Scroll spy
   initScrollSpy();
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* ── NOTE: No API key needed ─────────────────────────────────
+   語音朗讀使用瀏覽器內建的 Web Speech API（speechSynthesis），
+   完全免費，不需要任何 API 金鑰，也不會送出任何資料到外部伺服器。
+   支援 Chrome、Edge、Safari（桌機與手機皆可）。
+   Firefox 支援度較有限，建議使用 Chrome。
+   ──────────────────────────────────────────────────────────── */
