@@ -1,6 +1,6 @@
 /* ============================================================
    main.js  —  AI 命理預測實驗報告
-   功能：i18n 切換、Python 預產圖表（base64）、週切換、TTS 朗讀
+   功能：i18n 切換、Chart.js 圖表、週切換、TTS 朗讀
    ============================================================ */
 
 'use strict';
@@ -40,7 +40,7 @@ function applyI18n(lang) {
 }
 
 /* ── 3. Charts ──────────────────────────────────────────────── */
-const PERSONS = ['P1','P2','P3','P4','P5','P6','P7','P8'];
+const CHART_INSTANCES = {};
 const AI_COLOR = { gemini: '#4285f4', claude: '#d97706', gpt: '#10a37f' };
 
 const CSS = getComputedStyle(document.documentElement);
@@ -48,6 +48,9 @@ const INK_MID   = '#888';
 const INK       = '#1a1a1a';
 const GRID_COL  = '#e8e0d4';
 
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size   = 10;
+Chart.defaults.color       = INK_MID;
 
 function buildLineData(ai, week) {
   const preds   = PERSONS.map(p => SCORE_DATA[p][ai][week].pred);
@@ -92,49 +95,91 @@ const CHART_OPTS = {
 };
 
 function initCharts() {
-  updateCharts(currentWeek);
+  ['gemini', 'claude', 'gpt'].forEach(ai => {
+    const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
+    const canvas = document.getElementById(idMap[ai]);
+    if (CHART_INSTANCES[ai]) { CHART_INSTANCES[ai].destroy(); }
+    CHART_INSTANCES[ai] = new Chart(canvas, {
+      type: 'line',
+      data: buildLineData(ai, currentWeek),
+      options: structuredClone(CHART_OPTS),
+    });
+  });
 }
 
 function updateCharts(week) {
   currentWeek = week;
-  const idMap = { gemini: 'chartGemini', claude: 'chartClaude', gpt: 'chartGPT' };
   ['gemini', 'claude', 'gpt'].forEach(ai => {
-    const key = ai + '_' + week;
-    let img = document.getElementById('img_' + ai);
-    if (!img) {
-      const canvas = document.getElementById(idMap[ai]);
-      if (!canvas) return;
-      img = document.createElement('img');
-      img.id = 'img_' + ai;
-      img.style.cssText = 'width:100%;display:block;border-radius:2px;';
-      canvas.parentNode.replaceChild(img, canvas);
-    }
-    img.src = CHART_IMGS[key];
-    img.alt = ai + ' ' + week + ' chart';
+    if (!CHART_INSTANCES[ai]) return;
+    CHART_INSTANCES[ai].data = buildLineData(ai, week);
+    CHART_INSTANCES[ai].update('active');
   });
 }
 
 /* ── 4. Diff bars ───────────────────────────────────────────── */
 function renderDiffBars() {
   const wrap = document.getElementById('diffBars');
-  if (!wrap) return;
-  wrap.innerHTML = `<img src="${CHART_IMGS['diff']}" alt="Mean absolute error bar chart"
-    style="width:100%;max-width:460px;display:block;border-radius:2px;">`;
+  const maxVal = 20;
+  const items = [
+    { ai: 'gpt',    val: AVG_ABS_DIFF.gpt    },
+    { ai: 'gemini', val: AVG_ABS_DIFF.gemini  },
+    { ai: 'claude', val: AVG_ABS_DIFF.claude  },
+  ];
+  const labels = { gemini: 'Gemini', claude: 'Claude', gpt: 'ChatGPT' };
+
+  wrap.innerHTML = items.map(({ ai, val }) => `
+    <div class="diff-bar-row">
+      <span class="diff-bar-label">${labels[ai]}</span>
+      <div class="diff-bar-track" role="img" aria-label="${labels[ai]}: ${val}">
+        <div class="diff-bar-fill ${ai}" style="width:0%" data-target="${(val/maxVal*100).toFixed(1)}%"></div>
+        <span class="diff-bar-val">${val}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Animate on next frame
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.diff-bar-fill').forEach(el => {
+      el.style.width = el.dataset.target;
+    });
+  });
 }
 
 /* ── 5. Trust donut ─────────────────────────────────────────── */
 function initTrustChart() {
+  // Count: score 2→3 people, score 3→4 people, score 4→1 person
+  const counts = [0, 0, 0, 0, 0]; // index 0=score1, 1=score2 …
+  TRUST_SCORES.forEach(s => counts[s - 1]++);
+
   const canvas = document.getElementById('chartTrust');
-  if (!canvas) return;
-  let img = document.getElementById('img_trust');
-  if (!img) {
-    img = document.createElement('img');
-    img.id = 'img_trust';
-    img.style.cssText = 'width:100%;max-width:280px;display:block;margin:0 auto;border-radius:2px;';
-    canvas.parentNode.replaceChild(img, canvas);
-  }
-  img.src = CHART_IMGS['trust'];
-  img.alt = 'Trust distribution chart';
+  if (CHART_INSTANCES.trust) CHART_INSTANCES.trust.destroy();
+  CHART_INSTANCES.trust = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: ['1', '2', '3', '4', '5'],
+      datasets: [{
+        data: counts,
+        backgroundColor: ['#c0392b', '#e67e22', '#f1c40f', '#27ae60', '#2980b9'],
+        borderWidth: 2,
+        borderColor: '#f9f6f0',
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { padding: 12, boxWidth: 12 },
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label} 分：${ctx.raw} 人`,
+          },
+        },
+      },
+      cutout: '58%',
+    },
+  });
 }
 
 /* ── 6. Student cards ───────────────────────────────────────── */
@@ -274,7 +319,7 @@ function init() {
   initScrollSpy();
 }
 
-window.addEventListener('load', init);
+document.addEventListener('DOMContentLoaded', init);
 
 /* ── NOTE: No API key needed ─────────────────────────────────
    語音朗讀使用瀏覽器內建的 Web Speech API（speechSynthesis），
