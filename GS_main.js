@@ -41,7 +41,6 @@ function applyI18n(lang) {
 
 /* ── 3. Charts ──────────────────────────────────────────────── */
 const CHART_INSTANCES = {};
-const PERSONS = ['P1','P2','P3','P4','P5','P6','P7','P8'];
 const AI_COLOR = { gemini: '#4285f4', claude: '#d97706', gpt: '#10a37f' };
 
 const CSS = getComputedStyle(document.documentElement);
