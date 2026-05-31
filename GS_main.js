@@ -230,10 +230,19 @@ function speak(text) {
     document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
     return;
   }
+
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = currentLang === 'zh' ? 'zh-TW' : 'en-US';
-  utter.rate = 0.92;
-  ttsUtterance = utter;
+  utter.rate = 0.88;
+
+  // 挑比較好聽的聲音
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.lang.startsWith(currentLang === 'zh' ? 'zh' : 'en') &&
+    (v.name.includes('Google') || v.name.includes('Microsoft'))
+  );
+  if (preferred) utter.voice = preferred;
+
   utter.onend = () => document.querySelectorAll('.read-btn.speaking').forEach(b => b.classList.remove('speaking'));
   window.speechSynthesis.speak(utter);
 }
