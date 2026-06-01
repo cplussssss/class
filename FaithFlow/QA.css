@@ -1,0 +1,359 @@
+:root {
+  --ink: #1a1612;
+  --parchment: #f5f0e8;
+  --warm: #c8a96e;
+  --warm-light: #e8d5a8;
+  --warm-dim: #8c6d3f;
+  --ash: #6b6258;
+  --card-bg: #faf7f2;
+  --border: #ddd5c0;
+  --red: #b84c3a;
+  --green: #3a7d5a;
+  --glow: rgba(200, 169, 110, 0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--parchment);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(200,169,110,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(140,109,63,0.08) 0%, transparent 60%);
+  color: var(--ink);
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1rem 4rem;
+}
+
+/* ── 頁首 ─────────────────────────────────── */
+header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+header::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--warm), transparent);
+  margin: 1rem auto 0;
+}
+.title-en {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  color: var(--warm-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+h1 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.subtitle {
+  font-size: 0.82rem;
+  color: var(--ash);
+  margin-top: 0.5rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+/* ── 主容器 ───────────────────────────────── */
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ── 進度條 ───────────────────────────────── */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.progress-track {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--warm-dim), var(--warm));
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.progress-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ash);
+  white-space: nowrap;
+}
+
+/* ── 題目卡片 ─────────────────────────────── */
+.question-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 2rem 1.5rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  animation: slideIn 0.35s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.q-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.q-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--warm-dim);
+  background: var(--warm-light);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.q-category {
+  font-size: 0.72rem;
+  color: var(--ash);
+  letter-spacing: 0.05em;
+}
+.q-difficulty {
+  margin-left: auto;
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+}
+.diff-hard { background: #fae8e5; color: var(--red); }
+.diff-mid  { background: #faf0e0; color: #8c6820; }
+.diff-easy { background: #e8f5ee; color: var(--green); }
+
+.q-text {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+/* ── 答題區 ───────────────────────────────── */
+.answer-area {
+  margin-bottom: 1.25rem;
+}
+.answer-area label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ash);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 0.9rem 1rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: var(--ink);
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+textarea:focus {
+  border-color: var(--warm);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+/* ── 按鈕列 ───────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+button {
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 7px;
+  padding: 0.6rem 1.2rem;
+  transition: all 0.18s ease;
+  letter-spacing: 0.03em;
+}
+.btn-primary {
+  background: var(--ink);
+  color: var(--parchment);
+  font-weight: 500;
+}
+.btn-primary:hover { background: #2e2720; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--warm-dim);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--warm); color: var(--warm-dim); background: var(--glow); }
+
+.btn-ai {
+  background: linear-gradient(135deg, var(--warm-dim), var(--warm));
+  color: #fff;
+  font-weight: 500;
+  margin-left: auto;
+}
+.btn-ai:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── AI 回饋卡 ────────────────────────────── */
+.feedback-card {
+  background: #fff;
+  border: 1px solid var(--warm-light);
+  border-left: 3px solid var(--warm);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.feedback-icon {
+  width: 20px; height: 20px;
+  background: var(--warm);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: #fff;
+}
+.feedback-label {
+  font-size: 0.72rem;
+  font-family: 'DM Mono', monospace;
+  color: var(--warm-dim);
+  letter-spacing: 0.1em;
+}
+.feedback-text {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+/* ── AI 出題卡 ────────────────────────────── */
+.ai-question-card {
+  background: linear-gradient(135deg, #fdf8f0, #f5ede0);
+  border: 1px solid var(--warm-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.35s ease;
+}
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--warm-dim);
+  letter-spacing: 0.12em;
+  background: var(--warm-light);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+}
+.ai-badge::before {
+  content: '✦';
+  font-size: 8px;
+}
+.ai-q-text {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+/* ── 導覽 ─────────────────────────────────── */
+.nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+}
+.nav-dots {
+  display: flex;
+  gap: 6px;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.dot.active { background: var(--warm); transform: scale(1.3); }
+.dot.done   { background: var(--warm-dim); }
+
+/* ── 載入動畫 ─────────────────────────────── */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ash);
+  font-size: 0.82rem;
+  padding: 0.75rem 0;
+}
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--warm);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 完成畫面 ─────────────────────────────── */
+.complete-screen {
+  text-align: center;
+  padding: 3rem 1rem;
+  animation: fadeIn 0.5s ease;
+}
+.complete-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+.complete-screen h2 {
+  font-family: 'Noto Serif TC', serif;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.complete-screen p {
+  color: var(--ash);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── RWD ──────────────────────────────────── */
+@media (max-width: 540px) {
+  .question-card { padding: 1.25rem; }
+  .btn-ai { margin-left: 0; width: 100%; }
+}
