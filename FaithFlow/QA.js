@@ -150,8 +150,56 @@ const state = {
   aiLoading: false,
   feedbackOpen: null,   // 目前展開回報框的題目 id
   feedbackSent: {},     // 已送出回報的題目 id set
+  recording: false,     // 是否錄音中
   done: false,
 };
+
+// ═══════════════════════════════════════════════════════
+//  語音辨識
+// ═══════════════════════════════════════════════════════
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let recordingTranscript = '';  // 累積辨識文字
+
+function initRecognition() {
+  if (!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.lang = 'zh-TW';
+  r.continuous = true;       // 持續辨識，不自動停止
+  r.interimResults = true;   // 即時顯示中間結果
+
+  r.onresult = (e) => {
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    if (final) recordingTranscript += final;
+
+    // 即時更新 textarea
+    const ta = document.getElementById('ans');
+    if (ta) {
+      ta.value = recordingTranscript + (interim ? ' ' + interim : '');
+      state.answers[state.questions[state.currentIdx].id] = ta.value;
+    }
+  };
+
+  r.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      alert('請允許瀏覽器使用麥克風');
+    }
+    stopRecording();
+  };
+
+  r.onend = () => {
+    // continuous 模式下 onend 代表被外部停止
+    if (state.recording) stopRecording();
+  };
+
+  return r;
+}
 
 // ═══════════════════════════════════════════════════════
 //  Worker 呼叫（不需要 auth token）
@@ -270,6 +318,13 @@ function render() {
 
     <div class="btn-row">
       <button class="btn-primary" onclick="submitAnswer()">送出評分</button>
+      <button class="btn-record ${state.recording ? 'recording' : ''}"
+        onclick="toggleRecording()"
+        title="${SpeechRecognition ? '點擊開始/停止錄音' : '你的瀏覽器不支援語音辨識'}">
+        ${state.recording
+          ? '<span class="rec-dot"></span> 停止錄音'
+          : '🎙 錄音回答'}
+      </button>
       <button class="btn-secondary" onclick="skipQuestion()">跳過此題</button>
       <button class="btn-secondary" onclick="generateAIQ()">✦ AI 追問</button>
       <button class="btn-ai" onclick="generateNewQuestion()">產生新題目</button>
@@ -380,6 +435,7 @@ function skipQuestion() {
 }
 
 function nextQuestion() {
+  if (state.recording) stopRecording();
   state.aiQuestion = null;
   if (state.currentIdx < state.questions.length - 1) {
     state.currentIdx++;
@@ -391,6 +447,7 @@ function nextQuestion() {
 }
 
 function prevQuestion() {
+  if (state.recording) stopRecording();
   state.aiQuestion = null;
   if (state.currentIdx > 0) {
     state.currentIdx--;
@@ -399,12 +456,14 @@ function prevQuestion() {
 }
 
 function goTo(i) {
+  if (state.recording) stopRecording();
   state.aiQuestion = null;
   state.currentIdx = i;
   render();
 }
 
 function restart() {
+  if (state.recording) stopRecording();
   Object.assign(state, {
     questions: shuffle(PRESET_QUESTIONS),
     currentIdx: 0,
@@ -415,6 +474,7 @@ function restart() {
     aiLoading: false,
     feedbackOpen: null,
     feedbackSent: {},
+    recording: false,
     done: false,
   });
   render();
@@ -467,6 +527,67 @@ async function sendReport(qId) {
     if (btn) { btn.disabled = false; btn.textContent = '送出建議'; }
     return;
   }
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+//  錄音控制
+// ═══════════════════════════════════════════════════════
+function toggleRecording() {
+  if (!SpeechRecognition) {
+    alert('你的瀏覽器不支援語音辨識，請使用 Chrome 或 Edge');
+    return;
+  }
+  if (state.recording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+}
+
+function startRecording() {
+  recordingTranscript = '';
+  const q = state.questions[state.currentIdx];
+  // 保留已有的文字（如果使用者有手動輸入）
+  const existing = (state.answers[q.id] || '').trim();
+  if (existing) recordingTranscript = existing + ' ';
+
+  recognition = initRecognition();
+  if (!recognition) return;
+
+  try {
+    recognition.start();
+    state.recording = true;
+    render();
+  } catch (e) {
+    alert('無法啟動語音辨識：' + e.message);
+  }
+}
+
+async function stopRecording() {
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+  }
+  state.recording = false;
+  render();
+
+  // 取得最終文字
+  const q = state.questions[state.currentIdx];
+  const finalText = (document.getElementById('ans')?.value || '').trim();
+  if (!finalText) return;
+
+  state.answers[q.id] = finalText;
+
+  // 自動送出 AI 評分
+  state.loading = true;
+  render();
+  try {
+    state.feedbacks[q.id] = await getAIFeedback(q, finalText);
+  } catch (e) {
+    state.feedbacks[q.id] = '（AI 暫時無法回應，請稍後再試）';
+  }
+  state.loading = false;
   render();
 }
 
