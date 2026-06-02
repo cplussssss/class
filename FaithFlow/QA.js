@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 //  設定
 // ═══════════════════════════════════════════════════════
-const WORKER_URL   = 'https://focus.sijialai1473.workers.dev/quiz';
+const WORKER_URL = 'https://focus.sijialai1473.workers.dev/quiz';
 const FEEDBACK_URL = 'https://focus.sijialai1473.workers.dev/feedback';
-const LOG_URL      = 'https://focus.sijialai1473.workers.dev/log';
+const LOG_URL = 'https://focus.sijialai1473.workers.dev/log';
 const GIST_RAW_URL = 'https://gist.githubusercontent.com/cplussssss/9c163d4d6065bce2ff611b86ef8deb3a/raw/faithflow-qa-log.md';
 
 const SYSTEM_CONTEXT = `你是輔仁大學資訊管理學系的專題評審教授。
@@ -299,17 +299,17 @@ function render() {
 
       <div class="report-row">
         ${state.feedbackSent[q.id]
-          ? `<span class="report-sent">✓ 建議已送出，謝謝！</span>`
-          : state.feedbackOpen === q.id
-            ? `<div class="report-box">
+      ? `<span class="report-sent">✓ 建議已送出，謝謝！</span>`
+      : state.feedbackOpen === q.id
+        ? `<div class="report-box">
                 <textarea id="report-input" placeholder="描述修改建議，例如：題目方向可更聚焦在…" rows="3"></textarea>
                 <div class="report-actions">
                   <button class="btn-report-cancel" onclick="closeReport()">取消</button>
                   <button class="btn-report-send" onclick="sendReport(${q.id})">送出建議</button>
                 </div>
                </div>`
-            : `<button class="btn-report" onclick="openReport(${q.id})">✎ 回報題目問題</button>`
-        }
+        : `<button class="btn-report" onclick="openReport(${q.id})">✎ 回報題目問題</button>`
+    }
       </div>
     </div>
 
@@ -330,8 +330,8 @@ function render() {
         onclick="toggleRecording()"
         title="${SpeechRecognition ? '點擊開始/停止錄音' : '你的瀏覽器不支援語音辨識'}">
         ${state.recording
-          ? '<span class="rec-dot"></span> 停止錄音'
-          : '🎙 錄音回答'}
+      ? '<span class="rec-dot"></span> 停止錄音'
+      : '🎙 錄音回答'}
       </button>
       <button class="btn-secondary" onclick="skipQuestion()">跳過此題</button>
       <button class="btn-secondary" onclick="generateAIQ()">✦ AI 追問</button>
@@ -355,11 +355,11 @@ function render() {
       <button class="btn-secondary" onclick="prevQuestion()" ${state.currentIdx === 0 ? 'disabled style="opacity:0.4"' : ''}>← 上一題</button>
       <div class="nav-dots">
         ${state.questions.map((qq, i) => {
-          let cls = '';
-          if (i === state.currentIdx) cls = 'active';
-          else if (state.answers[qq.id]) cls = 'done';
-          return `<div class="dot ${cls}" onclick="goTo(${i})" title="Q${qq.id}"></div>`;
-        }).join('')}
+        let cls = '';
+        if (i === state.currentIdx) cls = 'active';
+        else if (state.answers[qq.id]) cls = 'done';
+        return `<div class="dot ${cls}" onclick="goTo(${i})" title="Q${qq.id}"></div>`;
+      }).join('')}
       </div>
       <button class="btn-secondary" onclick="nextQuestion()">${state.currentIdx === total - 1 ? '完成 ✓' : '下一題 →'}</button>
     </div>
@@ -370,7 +370,7 @@ function render() {
     const modal = document.createElement('div');
     modal.id = 'log-modal';
     modal.className = 'log-modal-overlay hidden';
-    modal.innerHTML = \`
+    modal.innerHTML = `
       <div class="log-modal-box">
         <div class="log-modal-header">
           <span class="log-modal-title">👥 大家的回答紀錄</span>
@@ -380,8 +380,8 @@ function render() {
           <div class="loading"><div class="spinner"></div>載入中…</div>
         </div>
       </div>
-    \`;
-    modal.addEventListener('click', function(e) {
+    `;
+    modal.addEventListener('click', function (e) {
       if (e.target === modal) closeLogModal();
     });
     document.body.appendChild(modal);
@@ -417,7 +417,7 @@ async function submitAnswer() {
   try {
     state.feedbacks[q.id] = await getAIFeedback(q, answer);
     // 背景寫入紀錄，不擋住 UI
-    logAnswer(q, answer, state.feedbacks[q.id]).catch(() => {});
+    logAnswer(q, answer, state.feedbacks[q.id]).catch(() => { });
   } catch (e) {
     state.feedbacks[q.id] = '（AI 暫時無法回應，請稍後再試）';
   }
@@ -638,7 +638,7 @@ async function stopRecording() {
   render();
   try {
     state.feedbacks[q.id] = await getAIFeedback(q, finalText);
-    logAnswer(q, finalText, state.feedbacks[q.id]).catch(() => {});
+    logAnswer(q, finalText, state.feedbacks[q.id]).catch(() => { });
   } catch (e) {
     state.feedbacks[q.id] = '（AI 暫時無法回應，請稍後再試）';
   }
@@ -683,7 +683,7 @@ function closeLogModal() {
 }
 
 // Close modal with Escape key
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') closeLogModal();
 });
 
