@@ -130,8 +130,17 @@ const PRESET_QUESTIONS = [
 // ═══════════════════════════════════════════════════════
 //  狀態
 // ═══════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const state = {
-  questions: [...PRESET_QUESTIONS],
+  questions: shuffle(PRESET_QUESTIONS),
   currentIdx: 0,
   answers: {},
   feedbacks: {},
@@ -379,7 +388,7 @@ function goTo(i) {
 
 function restart() {
   Object.assign(state, {
-    questions: [...PRESET_QUESTIONS],
+    questions: shuffle(PRESET_QUESTIONS),
     currentIdx: 0,
     answers: {},
     feedbacks: {},
