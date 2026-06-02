@@ -4,6 +4,7 @@
 const WORKER_URL   = 'https://focus.sijialai1473.workers.dev/quiz';
 const FEEDBACK_URL = 'https://focus.sijialai1473.workers.dev/feedback';
 const LOG_URL      = 'https://focus.sijialai1473.workers.dev/log';
+const GIST_RAW_URL = 'https://gist.githubusercontent.com/cplussssss/9c163d4d6065bce2ff611b86ef8deb3a/raw/faithflow-qa-log.md';
 
 const SYSTEM_CONTEXT = `你是輔仁大學資訊管理學系的專題評審教授。
 學生的專題名稱是「天好運 FaithFlow」，這是一個針對天主教徒的宗教數位化系統，
@@ -126,6 +127,12 @@ const PRESET_QUESTIONS = [
     category: '商業可行性',
     difficulty: 'easy',
     text: '運營三年的人力成本估計約 243,264 元/月，加上 Supabase、Cloudflare R2、Groq、Jina AI、Google Maps 等多項付費服務——系統的收費模式是什麼？如果免費使用，這些雲端服務費用如何支撐？',
+  },
+  {
+    id: 19,
+    category: '競品分析',
+    difficulty: 'mid',
+    text: '你們訪問調查除了神父和教友，有沒有做現有平台分析（如 Magisterium、Bible.com 等）做差異化比較？這些平台目前缺少哪些功能？你們的系統如何針對這些缺口設計？',
   },
 ];
 
@@ -329,6 +336,7 @@ function render() {
       <button class="btn-secondary" onclick="skipQuestion()">跳過此題</button>
       <button class="btn-secondary" onclick="generateAIQ()">✦ AI 追問</button>
       <button class="btn-ai" onclick="generateNewQuestion()">產生新題目</button>
+      <button class="btn-log" onclick="openLogModal()">👥 看看別人怎麼回答</button>
     </div>
 
     ${state.loading ? `<div class="loading"><div class="spinner"></div>AI 評分中…</div>` : ''}
@@ -356,6 +364,28 @@ function render() {
       <button class="btn-secondary" onclick="nextQuestion()">${state.currentIdx === total - 1 ? '完成 ✓' : '下一題 →'}</button>
     </div>
   `;
+
+  // Inject modal container if not already present
+  if (!document.getElementById('log-modal')) {
+    const modal = document.createElement('div');
+    modal.id = 'log-modal';
+    modal.className = 'log-modal-overlay hidden';
+    modal.innerHTML = \`
+      <div class="log-modal-box">
+        <div class="log-modal-header">
+          <span class="log-modal-title">👥 大家的回答紀錄</span>
+          <button class="log-modal-close" onclick="closeLogModal()">✕</button>
+        </div>
+        <div class="log-modal-body" id="log-modal-body">
+          <div class="loading"><div class="spinner"></div>載入中…</div>
+        </div>
+      </div>
+    \`;
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) closeLogModal();
+    });
+    document.body.appendChild(modal);
+  }
 
   document.getElementById('ans')?.addEventListener('input', e => {
     state.answers[q.id] = e.target.value;
@@ -615,6 +645,47 @@ async function stopRecording() {
   state.loading = false;
   render();
 }
+
+// ═══════════════════════════════════════════════════════
+//  回答紀錄 Modal
+// ═══════════════════════════════════════════════════════
+async function openLogModal() {
+  const modal = document.getElementById('log-modal');
+  const body = document.getElementById('log-modal-body');
+  if (!modal) return;
+
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>載入中…</div>';
+
+  try {
+    // Cache-bust so we always get the latest
+    const res = await fetch(GIST_RAW_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('載入失敗');
+    const md = await res.text();
+
+    // Use marked.js to render markdown
+    if (typeof marked !== 'undefined') {
+      body.innerHTML = '<div class="log-content">' + marked.parse(md) + '</div>';
+    } else {
+      // Fallback: plain text with line breaks
+      body.innerHTML = '<pre class="log-raw">' + md.replace(/</g, '&lt;') + '</pre>';
+    }
+  } catch (e) {
+    body.innerHTML = '<p style="color:var(--red);padding:1rem;">載入失敗，請稍後再試</p>';
+  }
+}
+
+function closeLogModal() {
+  const modal = document.getElementById('log-modal');
+  if (modal) modal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLogModal();
+});
 
 // ── 啟動 ──
 render();
