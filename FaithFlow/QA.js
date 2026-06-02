@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
 //  設定
 // ═══════════════════════════════════════════════════════
-const WORKER_URL = 'https://focus.sijialai1473.workers.dev/quiz';
+const WORKER_URL   = 'https://focus.sijialai1473.workers.dev/quiz';
 const FEEDBACK_URL = 'https://focus.sijialai1473.workers.dev/feedback';
+const LOG_URL      = 'https://focus.sijialai1473.workers.dev/log';
 
 const SYSTEM_CONTEXT = `你是輔仁大學資訊管理學系的專題評審教授。
 學生的專題名稱是「天好運 FaithFlow」，這是一個針對天主教徒的宗教數位化系統，
@@ -385,11 +386,34 @@ async function submitAnswer() {
   render();
   try {
     state.feedbacks[q.id] = await getAIFeedback(q, answer);
+    // 背景寫入紀錄，不擋住 UI
+    logAnswer(q, answer, state.feedbacks[q.id]).catch(() => {});
   } catch (e) {
     state.feedbacks[q.id] = '（AI 暫時無法回應，請稍後再試）';
   }
   state.loading = false;
   render();
+}
+
+// ── 寫入 Gist 紀錄 ──────────────────────────────────────
+async function logAnswer(q, answer, aiFeedback) {
+  const now = new Date();
+  const date = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const time = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+
+  await fetch(LOG_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      date,
+      time,
+      questionId: q.id,
+      questionText: q.text,
+      category: q.category,
+      answer,
+      aiFeedback,
+    }),
+  });
 }
 
 async function generateAIQ() {
@@ -584,6 +608,7 @@ async function stopRecording() {
   render();
   try {
     state.feedbacks[q.id] = await getAIFeedback(q, finalText);
+    logAnswer(q, finalText, state.feedbacks[q.id]).catch(() => {});
   } catch (e) {
     state.feedbacks[q.id] = '（AI 暫時無法回應，請稍後再試）';
   }
