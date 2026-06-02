@@ -2,6 +2,7 @@
 //  設定
 // ═══════════════════════════════════════════════════════
 const WORKER_URL = 'https://focus.sijialai1473.workers.dev/quiz';
+const FEEDBACK_URL = 'https://focus.sijialai1473.workers.dev/feedback';
 
 const SYSTEM_CONTEXT = `你是輔仁大學資訊管理學系的專題評審教授。
 學生的專題名稱是「天好運 FaithFlow」，這是一個針對天主教徒的宗教數位化系統，
@@ -147,6 +148,8 @@ const state = {
   aiQuestion: null,
   loading: false,
   aiLoading: false,
+  feedbackOpen: null,   // 目前展開回報框的題目 id
+  feedbackSent: {},     // 已送出回報的題目 id set
   done: false,
 };
 
@@ -237,6 +240,21 @@ function render() {
         <span class="q-difficulty ${diffClass(q.difficulty)}">${diffLabel(q.difficulty)}</span>
       </div>
       <p class="q-text">${q.text}</p>
+
+      <div class="report-row">
+        ${state.feedbackSent[q.id]
+          ? `<span class="report-sent">✓ 建議已送出，謝謝！</span>`
+          : state.feedbackOpen === q.id
+            ? `<div class="report-box">
+                <textarea id="report-input" placeholder="描述修改建議，例如：題目方向可更聚焦在…" rows="3"></textarea>
+                <div class="report-actions">
+                  <button class="btn-report-cancel" onclick="closeReport()">取消</button>
+                  <button class="btn-report-send" onclick="sendReport(${q.id})">送出建議</button>
+                </div>
+               </div>`
+            : `<button class="btn-report" onclick="openReport(${q.id})">✎ 回報題目問題</button>`
+        }
+      </div>
     </div>
 
     ${state.aiQuestion ? `
@@ -395,8 +413,60 @@ function restart() {
     aiQuestion: null,
     loading: false,
     aiLoading: false,
+    feedbackOpen: null,
+    feedbackSent: {},
     done: false,
   });
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+//  題目回報
+// ═══════════════════════════════════════════════════════
+function openReport(qId) {
+  state.feedbackOpen = qId;
+  render();
+  // render 後聚焦到輸入框
+  setTimeout(() => document.getElementById('report-input')?.focus(), 50);
+}
+
+function closeReport() {
+  state.feedbackOpen = null;
+  render();
+}
+
+async function sendReport(qId) {
+  const input = document.getElementById('report-input');
+  const suggestion = input?.value?.trim();
+  if (!suggestion) { input?.focus(); return; }
+
+  const q = state.questions.find(q => q.id === qId);
+  const btn = document.querySelector('.btn-report-send');
+  if (btn) { btn.disabled = true; btn.textContent = '送出中…'; }
+
+  try {
+    const res = await fetch(FEEDBACK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: qId,
+        questionText: q?.text || '',
+        suggestion,
+      }),
+    });
+    if (res.ok) {
+      state.feedbackSent[qId] = true;
+      state.feedbackOpen = null;
+    } else {
+      alert('送出失敗，請稍後再試');
+      if (btn) { btn.disabled = false; btn.textContent = '送出建議'; }
+      return;
+    }
+  } catch (e) {
+    alert('網路錯誤，請稍後再試');
+    if (btn) { btn.disabled = false; btn.textContent = '送出建議'; }
+    return;
+  }
   render();
 }
 

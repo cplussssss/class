@@ -357,3 +357,62 @@ button {
   .question-card { padding: 1.25rem; }
   .btn-ai { margin-left: 0; width: 100%; }
 }
+
+/* ── 題目回報區 ───────────────────────────── */
+.report-row {
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--border);
+}
+.btn-report {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--ash);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s, color 0.15s;
+}
+.btn-report:hover { opacity: 1; color: var(--warm-dim); }
+
+.report-box {
+  animation: fadeIn 0.2s ease;
+}
+.report-box textarea {
+  min-height: 72px;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+  resize: none;
+}
+.report-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.btn-report-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ash);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+}
+.btn-report-cancel:hover { background: var(--glow); }
+.btn-report-send {
+  background: var(--ink);
+  color: var(--parchment);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.btn-report-send:hover { background: #2e2720; }
+.btn-report-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.report-sent {
+  font-size: 0.75rem;
+  color: var(--green);
+  letter-spacing: 0.04em;
+}
